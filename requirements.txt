@@ -14,7 +14,6 @@ Flask-User==1.0.1.5
 Flask-Admin==1.6.0
 pandas
 numpy
-math
 scikit-learn
 # Automated tests
 pytest==3.0.5
