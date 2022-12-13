@@ -13,8 +13,6 @@ Flask-WTF==0.14.2
 Flask-User==1.0.1.5
 Flask-Admin==1.6.0
 pandas
-pickle
-hashlib
 numpy
 math
 scikit-learn
