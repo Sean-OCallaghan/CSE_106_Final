@@ -12,7 +12,12 @@ Flask-SQLAlchemy==2.4.0
 Flask-WTF==0.14.2
 Flask-User==1.0.1.5
 Flask-Admin==1.6.0
-
+pandas
+pickle
+hashlib
+numpy
+math
+scikit-learn
 # Automated tests
 pytest==3.0.5
 pytest-cov==2.4.0
