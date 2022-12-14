@@ -746,4 +746,6 @@ admin = Admin(app)
 admin.add_view(ModelView(Songs, session))
 admin.add_view(ModelView(Users, session))
 admin.add_view(ModelView(Playlists, session))
-app.run()
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=3000)
