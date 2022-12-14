@@ -82,7 +82,9 @@ def Initialize_Users():
                      db.Column('ML_Model_filename',
                                db.String(255), nullable=True),
                      db.Column('Genres', db.String(255), nullable=True),
-                     db.Column('Artists', db.String(255), nullable=True)
+                     db.Column('Artists', db.String(255), nullable=True),
+                     db.Column('Liked_Playlists',
+                               db.String(255), nullable=True)
                      )
 
     metadata.create_all(engine)  # Creates the table

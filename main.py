@@ -166,6 +166,15 @@ def Login():
 
         return json.dumps(HT)
 
+
+@app.route('/logout', methods=['POST'])
+def Logout():
+
+    global ID
+    ID = ""
+
+    return json.dumps({})
+
 # Get Information needed onload of the user's homepage (playlists)
 
 
@@ -609,35 +618,6 @@ def GetPlaylist(playlist_ID):
 # Add a song to a playlist
 
 
-@app.route('/UserHome/ModifyPlaylist/DeleteSong/<playlist>/<song>', methods=['PUT'])
-def DeleteSong(playlist, song):
-
-    # Delete a song to the playlist
-
-    if (request.method == 'PUT'):
-
-        # SQLAlchemy Query to select all rows with
-        query = db.select(Playlists).where(
-            Playlists.c.User_ID == ID and Playlists.c.playlist_name == playlist)
-
-        # Fetch all the records
-        result = engine.execute(query).fetchall()
-
-        # The format of songs will be : {Sorry, Justin Beiber;O.N, BTS; ...}
-        try:
-            list_of_songs = result[0][3].split(";")
-            list_of_songs = list_of_songs.split(';')
-            list_of_songs.pop(list_of_songs.index(song))
-        except:
-            pass
-
-        q = f"""UPDATE Playlists
-        SET songs = {list_of_songs}
-        WHERE User_D == {ID} and playlist_name == {playlist};"""
-
-        result = conn.execute(q)
-
-
 @app.route('/GetSongInfo/<songID>', methods=['GET'])
 def GetSong(songID):
 
@@ -740,6 +720,217 @@ def GetPlaylistSongs(playlist_ID):
         # print(json.dumps(new_songs))
 
         return json.dumps(new_songs)
+
+
+@app.route('/GetAllPlaylists', methods=['GET'])
+def GetAllPlaylists():
+
+    # Return the Names of the Playlists linked to the user
+
+    # User's Playlists, Suggested songs
+    HT = []
+
+    q = f'''SELECT playlist_name, playlists_ID
+    FROM Playlists'''
+
+    result = conn.execute(q)
+
+    for i, item in enumerate(result):
+        HT.append({"name": item[0], "ID": item[1]})
+    output = [x for x in HT if (
+        x['name'] != "Liked Songs" and x['name'] != "Recommended Songs")]
+    print(HT)
+
+    return json.dumps(output)
+
+
+@app.route('/UserHome/ModifyPlaylist/DeletePlaylist', methods=['POST'])
+def DeletePlaylist():
+
+    # Delete a playlist
+    playlist_ID = request.json["playlist_ID"]
+
+    # Add a song to the playlist
+
+    if (request.method == 'POST'):
+
+        # SQLAlchemy Query to select all rows with
+        query = db.delete(playlists).where(
+            playlists.columns.playlists_ID == playlist_ID)
+        conn.execute(query)
+
+        return json.dumps({0: 0})
+
+
+@app.route('/UserHome/ModifyPlaylist/DeleteSong', methods=['POST'])
+def DeleteSong():
+
+    # Delete a song to the playlist
+    playlist_ID = request.json["playlist_ID"]
+    song_ID = request.json["song_ID"]
+
+    # Add a song to the playlist
+
+    if (request.method == 'POST'):
+
+        # SQLAlchemy Query to select all rows with
+        query = db.select(playlists).where(
+            playlists.columns.playlists_ID == playlist_ID)
+
+        # Fetch all the records
+        result = engine.execute(query).fetchall()
+
+        curr_songs = list(result[0][3].split(","))
+
+        try:
+            curr_songs.remove("")
+        except:
+            pass
+
+        try:
+            curr_songs.remove(str(song_ID))
+        except:
+            pass
+
+        temp = ""
+        for i, item in enumerate(curr_songs):
+            if i < len(curr_songs) - 1:
+                temp += str(item) + ","
+            else:
+                temp += str(item)
+
+        print(temp)
+
+        query = db.update(playlists).values(songs=temp)
+        query = query.where(playlists.columns.playlists_ID == playlist_ID)
+        conn.execute(query)
+
+        return json.dumps({0: 0})
+
+
+@app.route('/UserHome/UnlikePlaylist', methods=['POST'])
+def UnlikePlaylist():
+
+    playlist_ID = request.json["playlist_ID"]
+
+    # Add a song to the playlist
+
+    if (request.method == 'POST'):
+
+        # SQLAlchemy Query to select all rows with
+        query = db.select(users).where(users.columns.User_ID == ID)
+
+        # Fetch all the records
+        result = engine.execute(query).fetchall()
+
+        liked_playlists = list(result[0][6].split(","))
+
+        try:
+            liked_playlists.remove("")
+        except:
+            pass
+
+        try:
+            liked_playlists.remove(str(playlist_ID))
+        except:
+            pass
+
+        temp = ""
+        for i, item in enumerate(liked_playlists):
+            if i < len(liked_playlists) - 1:
+                temp += str(item) + ","
+            else:
+                temp += str(item)
+
+        query = db.update(users).values(Liked_Playlists=temp)
+        query = query.where(users.columns.User_ID == ID)
+        conn.execute(query)
+
+        return json.dumps({0: 0})
+
+
+@app.route('/LikePlaylist', methods=['POST'])
+def LikePlaylist():
+
+    playlist_ID = request.json["playlist_ID"]
+
+    # Add a song to the playlist
+
+    if (request.method == 'POST'):
+
+        # SQLAlchemy Query to select all rows with
+        query = db.select(users).where(users.columns.User_ID == ID)
+
+        # Fetch all the records
+        result = engine.execute(query).fetchall()
+
+        liked_playlists = []
+
+        try:
+            liked_playlists = list(result[0][6].split(","))
+        except:
+            pass
+
+        try:
+            liked_playlists.remove("")
+        except:
+            pass
+
+        liked_playlists.append(playlist_ID)
+
+        temp = ""
+        for i, item in enumerate(liked_playlists):
+            if i < len(liked_playlists) - 1:
+                temp += str(item) + ","
+            else:
+                temp += str(item)
+
+        query = db.update(users).values(Liked_Playlists=temp)
+        query = query.where(users.columns.User_ID == ID)
+        conn.execute(query)
+
+        return json.dumps({0: 0})
+
+
+@app.route('/GetLikedPlaylists', methods=['GET'])
+def GetLikedPlaylists():
+
+    # Return the songs in each playlist
+
+    if (request.method == 'GET'):
+
+        # SQLAlchemy Query to select all rows with
+        query = db.select(users).where(users.columns.User_ID == ID)
+
+        # Fetch all the records
+        result = engine.execute(query).fetchall()
+
+        playlists = list(result[0][6].split(","))
+
+        print(json.dumps(playlists))
+
+        return json.dumps(playlists)
+
+
+@app.route('/UserHome/GetPlaylistName/<playID>', methods=['GET'])
+def GetPlaylistName(playID):
+
+    # Return the name of the playlist
+
+    if (request.method == 'GET'):
+
+        # SQLAlchemy Query to select all rows with
+        query = db.select(playlists).where(
+            playlists.columns.playlists_ID == playID)
+
+        # Fetch all the records
+        result = engine.execute(query).fetchall()
+
+        playlist_name = list(result[0][1])
+
+        print(json.dumps(playlist_name))
+
+        return json.dumps(playlist_name)
 
 
 admin = Admin(app)
